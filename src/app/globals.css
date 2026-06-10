@@ -1,0 +1,688 @@
+@import "tailwindcss";
+
+/* ── Custom Fonts ── */
+@font-face {
+  font-family: "Pixel NES";
+  src: url("/fonts/Pixel_NES.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "NEC_APC3";
+  src: url("/fonts/Web437_NEC_APC3_8x16.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "NEC_APC3";
+  src: url("/fonts/Web437_Nix8810_M16.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Digital";
+  src: url("/fonts/Digital-7.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Perfect DOS VGA 437 Win";
+  src: url("/fonts/Perfect_DOS_VGA_437_Win.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+/* ── Design Tokens ── */
+:root {
+  --body-text-shadow: 0 0 20px #ffffff4a, 0 0 20px #c084fc45;
+  --green-text-shadow: 0 0 20px #9d6bc782;
+  --letter-shadow: drop-shadow(0 0 0.75rem rgba(160, 100, 220, 0.5));
+  --link-color: #b06aff;
+}
+
+/* ── Reset / Base ── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+  margin: 0;
+  margin-top: 10px;
+  image-rendering: pixelated;
+  font-family: "MS UI Gothic", "NEC_APC3", Tahoma, sans-serif;
+  background-color: black;
+  text-shadow: var(--body-text-shadow);
+  font-smooth: never;
+  -webkit-font-smoothing: none;
+  color: white;
+}
+
+/* CRT scanline overlays (desktop only) */
+@media screen and (min-width: 601px) {
+  body::before {
+    content: "";
+    position: fixed;
+    opacity: 0.2;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+    background-image: url(/images/overlay.png);
+    background-repeat: repeat;
+    background-position: 0px 0px;
+    animation-name: Static;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: steps(4);
+    box-shadow: inset 0px 0px 10em rgb(0 0 0 / 40%);
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    top: 0;
+    opacity: 0.5;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+    background-image: url(/images/overlay2.png);
+    background-repeat: repeat;
+    background-position: 0px 0px;
+    animation-name: Static;
+    animation-duration: 0.8s;
+    animation-iteration-count: infinite;
+    animation-timing-function: steps(4);
+  }
+}
+
+/* ── Layout ── */
+#container {
+  width: 900px;
+  margin: 0 auto;
+}
+#main-layout {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+#maintd {
+  width: 675px;
+  flex-shrink: 0;
+  vertical-align: baseline;
+}
+#menutd {
+  width: 225px;
+  flex-shrink: 0;
+  vertical-align: baseline;
+}
+
+/* ── Logo ── */
+#logo-link {
+  text-decoration: none;
+}
+#logo {
+  text-align: center;
+  padding-top: 5px;
+  animation: flickering 0.07s infinite;
+  margin-right: 50px;
+}
+.noanimation {
+  animation: none !important;
+}
+.letter {
+  display: inline;
+  height: 60px;
+  filter: var(--letter-shadow);
+}
+#logo-n {
+  top: 16px;
+  cursor: pointer;
+  position: absolute;
+}
+
+/* ── Box ── */
+.box {
+  background-color: #000000a8;
+  border: 2px solid #383838;
+  border-radius: 4px;
+  color: white;
+  padding: 10px 15px;
+  margin: 5px;
+}
+.centerbox {
+  text-align: center;
+}
+
+/* ── Typography ── */
+h2 {
+  color: var(--link-color);
+  font-family: "Pixel NES", sans-serif;
+  margin: 0;
+  text-shadow: var(--green-text-shadow);
+  transition: 0.7s;
+}
+h3 {
+  margin: 0;
+  color: var(--link-color);
+}
+a {
+  text-decoration: none;
+  color: var(--link-color);
+  text-shadow: var(--green-text-shadow);
+  transition: 0.7s;
+}
+a:hover {
+  text-decoration: underline;
+}
+footer {
+  text-align: center;
+  color: white;
+}
+
+/* ── Navigation links ── */
+.navlink {
+  color: white !important;
+  display: inline-block;
+  margin-bottom: 3px;
+  text-shadow: var(--body-text-shadow);
+}
+
+/* ── FPS / Debug ── */
+#fps {
+  font-family: "Digital", monospace;
+  position: fixed;
+  left: 0;
+  top: 0;
+  color: lime;
+  text-shadow: none;
+  z-index: 9999;
+  font-size: 16px;
+}
+#debug {
+  top: 16px;
+  position: fixed;
+  left: 0;
+  color: lime;
+  text-shadow: none;
+  image-rendering: pixelated;
+  font-family: "MS UI Gothic", "NEC_APC3", Tahoma, sans-serif;
+}
+
+/* ── Background image ── */
+#bg {
+  z-index: -999;
+  background-size: cover;
+  image-rendering: pixelated;
+  background-color: black;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  filter: hue-rotate(100deg) saturate(2) brightness(0.85);
+}
+
+/* ── Wires ── */
+#wires {
+  position: absolute;
+  top: 1px;
+  padding-left: 5px;
+  z-index: -5;
+}
+
+/* ── Mewo cat ── */
+#mewo {
+  position: absolute;
+  padding-top: 27px;
+  padding-left: 33px;
+  cursor: grab;
+  z-index: 500;
+}
+
+/* ── Snow animation ── */
+#snow {
+  background: none;
+  background-image: url(/images/s1.png), url(/images/s2.png), url(/images/s3.png);
+  height: 100%;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1;
+  animation: snow 100s linear infinite;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* ── Rain canvas ── */
+#rain-canvas {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: -2;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ── Cursors ── */
+#cursors {
+  position: absolute;
+  z-index: 5;
+}
+.cursor {
+  user-select: none;
+  position: absolute;
+  transition: 0.1s;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+/* ── Mood ── */
+#mood-div {
+  clear: left;
+  float: left;
+  width: 110px;
+  position: relative;
+  bottom: 6px;
+  left: 1px;
+  margin-right: 5px;
+}
+#mood {
+  text-align: center;
+  width: 100px;
+  margin: 0 auto;
+  display: block;
+  font-size: 13px;
+  color: black;
+  padding: 2px 0;
+  border: 1px solid rgb(41, 124, 92);
+}
+#mood-div > a {
+  text-decoration: none;
+}
+
+/* ── Avatar / dimden gif ── */
+#dimdengif {
+  float: left;
+  border: 1px solid rgb(41, 124, 92);
+  margin: 10px 10px 5px 5px;
+  width: 100px;
+  height: 94px;
+}
+
+/* ── Blog ── */
+.blog-arrow {
+  font-weight: bolder;
+  color: #9d6bc7;
+}
+
+/* ── Projects banner ── */
+#projects-banner {
+  image-rendering: initial;
+  margin-left: 8px;
+  margin-top: 10px;
+}
+#projects-banner img {
+  border-radius: 2px;
+}
+
+/* ── Projects: meow knob + rainworld ── */
+#meow-link {
+  transform: rotate(90deg);
+  display: inline-block;
+  position: absolute;
+  margin-left: -114px;
+  margin-top: 85px;
+  border-left: 1px solid white;
+  opacity: 0.6;
+  height: 43px;
+}
+#rainworld-platform {
+  position: absolute;
+  margin-top: 160px;
+  margin-left: -68px;
+}
+#rainworld-slugcat {
+  position: absolute;
+  margin-top: 274px;
+  margin-left: -59px;
+  z-index: 3;
+}
+
+/* ── Terminal / Systems status ── */
+.terminal {
+  background-color: black !important;
+  font-family: "Perfect DOS VGA 437 Win", monospace;
+  color: lightgray;
+}
+#statuses > td {
+  width: 250px;
+}
+#statuses > td > span {
+  text-shadow: var(--body-text-shadow);
+}
+.status-ok {
+  color: #c084fc;
+  text-shadow: 0 0 20px #c084fc;
+}
+.status-fail {
+  color: #ff5858;
+  text-shadow: 0 0 20px #ff5858;
+}
+
+/* ── Hotel text (repurposed as "skills" label) ── */
+#hotel {
+  float: right;
+  right: 55px;
+  height: 1px;
+  font-size: 32px;
+  top: -28px;
+  position: relative;
+  color: #ff7ddb;
+  text-shadow: 0 0 10px #ffffff00, 0 0 20px #ffffff80, 0 0 30px #e000e659,
+    0 0 40px #00e6b200, 0 0 50px #00e6bd3d, 0 0 60px #b200e629,
+    0 0 70px #a700e657;
+  user-select: none;
+  font-family: "MS Gothic", Tahoma, sans-serif;
+  animation: flickering 0.1s infinite;
+}
+
+/* ── Music box ── */
+#musicbox {
+  height: 60px;
+}
+#albumcover {
+  border: 1px solid #383838;
+  float: left;
+  margin-right: 10px;
+}
+#songname {
+  width: 115px;
+}
+#artist {
+  overflow-wrap: anywhere;
+  max-height: 35px;
+  text-overflow: ellipsis;
+  display: grid;
+  overflow: hidden;
+}
+#songlink {
+  color: white;
+  text-decoration: none;
+  text-shadow: var(--body-text-shadow);
+}
+
+/* ── Online pulse blob ── */
+.blob {
+  background: #5dff8a;
+  border-radius: 50%;
+  margin-right: 7px;
+  height: 10px;
+  width: 10px;
+  box-shadow: 0 0 0 0 #5dff8a;
+  transform: scale(1);
+  animation: pulse 2s infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: -4px;
+}
+.inblob {
+  background: rgb(93, 93, 93);
+  border-radius: 50%;
+  margin-right: 7px;
+  height: 10px;
+  width: 10px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: -4px;
+}
+
+/* ── Online status ── */
+#status {
+  display: inline;
+}
+
+/* ── Switch ── */
+#switch {
+  float: right;
+  position: relative;
+  left: 46px;
+  top: -5px;
+  cursor: pointer;
+}
+
+/* ── Cool sites label ── */
+#cool-sites {
+  color: gray;
+  position: absolute;
+  margin-left: 241px;
+  margin-top: 6px;
+  width: 100px;
+  font-style: italic;
+}
+
+/* ── WebTiles ── */
+#webtiles-iframe {
+  border: 2px solid #383838;
+  border-radius: 4px;
+  width: 250px;
+  height: 270px;
+}
+#webtiles-container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: flex-start;
+}
+#webtiles-container p {
+  margin: 0;
+  margin-bottom: 10px;
+}
+
+/* ── New photos badge ── */
+#new-photos {
+  color: #ff1010;
+  font-size: 13px;
+  margin-left: 5px;
+  font-weight: bolder;
+  letter-spacing: 0.5px;
+  text-shadow: 0px 0px 6px red;
+}
+
+/* ── Marquee ── */
+marquee * {
+  text-shadow: none;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px rgba(70, 70, 70, 0.479);
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgb(31, 31, 31);
+  outline: 1px solid rgb(26, 80, 59);
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(31, 31, 31);
+  outline: 1px solid rgb(41, 124, 92);
+}
+
+/* ── Moon icon ── */
+.moon-icon {
+  transition-duration: 0.5s;
+}
+
+/* ── Skip links (accessibility) ── */
+.skip-to {
+  background: #000000;
+  border: rgb(26, 80, 59) solid 1px;
+  font-size: 50px;
+  top: 0;
+  font-family: "MS UI Gothic", Tahoma, sans-serif;
+  left: 0;
+  padding: 5px 10px;
+  position: absolute;
+  transform: translateY(-120%);
+  transition: transform 0.2s;
+  color: var(--link-color);
+  text-decoration: none;
+}
+.skip-to:focus {
+  transform: translateY(0%);
+}
+
+/* ── Textarea / inputs ── */
+textarea {
+  background-color: black;
+  color: white;
+  border: 1px solid #383838;
+  font-family: "MS Gothic", monospace;
+  resize: none;
+}
+
+/* ── Mobile menu ── */
+#mobile-menu-toggle,
+#mobile-menu-backdrop {
+  display: none;
+}
+
+/* ── Keyframes ── */
+@keyframes flickering {
+  0% { opacity: 0.63; }
+  1% { opacity: 0.46; }
+  2% { opacity: 0.95; }
+  3% { opacity: 0.37; }
+  4% { opacity: 0.78; }
+  5% { opacity: 0.41; }
+  6% { opacity: 1; }
+  7% { opacity: 0.9; }
+  8% { opacity: 0.43; }
+  9% { opacity: 1; }
+  10% { opacity: 0.48; }
+  20% { opacity: 0.53; }
+  30% { opacity: 0.38; }
+  40% { opacity: 0.84; }
+  50% { opacity: 1; }
+  60% { opacity: 0.72; }
+  70% { opacity: 0.9; }
+  80% { opacity: 0.55; }
+  90% { opacity: 0.88; }
+  100% { opacity: 0.63; }
+}
+
+@keyframes Static {
+  0% { background-position: 0px 0px; }
+  100% { background-position: 0px 4px; }
+}
+
+@keyframes snow {
+  0% { background-position: 0px 0px, 0px 0px, 0px 0px; }
+  50% { background-position: 5000px 5000px, 1000px 2000px, -1000px 1500px; }
+  100% { background-position: 5000px 10000px, 2000px 4000px, -1000px 3000px; }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(93, 255, 138, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(93, 255, 138, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(93, 255, 138, 0);
+  }
+}
+
+@keyframes cvGlow {
+  0%, 100% {
+    box-shadow: 0 0 6px #c084fc55, 0 0 12px #c084fc22;
+    border-color: #c084fc;
+  }
+  50% {
+    box-shadow: 0 0 18px #c084fcbb, 0 0 36px #c084fc66, 0 0 54px #c084fc33;
+    border-color: #e0b0ff;
+  }
+}
+
+/* ── Responsive (mobile < 920px) ── */
+@media screen and (max-width: 920px) {
+  #cursors { display: none; }
+  #hotel { right: 0px; }
+  #container {
+    width: 100%;
+    max-width: 900px;
+    box-sizing: border-box;
+    padding: 0 8px;
+  }
+  #wires { display: none; }
+  #projects-banner { margin-left: 0; margin-right: 0; }
+  #projects-banner img {
+    width: 100%;
+    max-width: 650px;
+    height: auto;
+    display: block;
+  }
+  #main-layout { display: block; }
+  #maintd { width: 100%; }
+  #menutd {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(82vw, 260px);
+    max-width: none !important;
+    height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 46px;
+    background-color: #000000f2;
+    border-left: 1px solid #383838;
+    transform: translateX(100%);
+    transition: transform 0.2s ease-in-out;
+    z-index: 1201;
+  }
+  #mobile-menu-toggle {
+    display: block;
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    z-index: 1203;
+    background-color: black;
+    color: var(--link-color);
+    border: 1px solid #383838;
+    border-radius: 4px;
+    padding: 7px 10px;
+    font-family: "Pixel NES", sans-serif;
+    font-size: 12px;
+    text-shadow: var(--green-text-shadow);
+    cursor: pointer;
+  }
+  #mobile-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    background-color: rgba(0, 0, 0, 0.35);
+  }
+  body.mobile-menu-open { overflow: hidden; }
+  body.mobile-menu-open #menutd { transform: translateX(0); }
+  body.mobile-menu-open #mobile-menu-backdrop { display: block; }
+
+  #webtiles-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
