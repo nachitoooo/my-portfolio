@@ -126,6 +126,27 @@ body {
   vertical-align: baseline;
 }
 
+/* ── Hero / 3D CRT ── */
+#hero {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+#hero-left {
+  flex: 1;
+}
+#crt3d-wrap {
+  width: 400px;
+  height: 250px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 16px #c084fc4d);
+}
+#crt3d-wrap canvas {
+  image-rendering: pixelated;
+}
+
 /* ── Logo ── */
 #logo-link {
   text-decoration: none;
@@ -621,6 +642,12 @@ textarea {
 /* ── Responsive (mobile < 920px) ── */
 @media screen and (max-width: 920px) {
   #cursors { display: none; }
+  #hero { flex-direction: column; }
+  #crt3d-wrap {
+    width: 100%;
+    max-width: 400px;
+    height: 210px;
+  }
   #hotel { right: 0px; }
   #container {
     width: 100%;

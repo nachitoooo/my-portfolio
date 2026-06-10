@@ -2,8 +2,11 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+import { LS, CHAR_PAL, CHAR_FRAMES, CON_PAL, CON_FRAMES, drawPx } from "./pixelArt";
+import PixelCat from "./PixelCat";
 
 const CvModal = dynamic(() => import("./CvModal"), { ssr: false });
+const Crt3D = dynamic(() => import("./Crt3D"), { ssr: false });
 
 type Lang = "en" | "es";
 
@@ -91,90 +94,6 @@ function MobileMenu() {
 }
 
 /* ── Loading screen ─────────────────────────────────────────── */
-
-const LS = 5; // pixel scale — bigger for more detail
-
-const CHAR_PAL: Record<string, string> = {
-  K: "#1a1a1a",   // black fur + eye
-  k: "#333333",   // paw shadow
-  W: "#f5f5f5",   // white face
-  w: "#d8d8d8",   // belly off-white
-  N: "#ff8888",   // pink nose
-};
-
-// 10w × 10h — 4-frame walk cycle, profile (cat faces RIGHT, tail at LEFT)
-// Tail tip sways L→R each frame; belly has black patches
-const CAT_TAILS = [
-  ["..K.......", ".KK....K.."],   // f0: tip center-right
-  [".K........", "KKK....K.."],   // f1: tip left
-  ["..K.......", ".KK....K.."],   // f2: tip center-right
-  ["...K......", ".KKK...K.."],   // f3: tip far right
-];
-const CAT_BODY_ROWS = [
-  "KKK...KWK.",   // tail base + head outline (W = white face)
-  "KKKKKKwKNK",   // body top + face (K = black eye, N = pink nose)
-  ".KwwKwwKKK",   // belly with black patch at col 4 + chin
-  ".KwKwwwKK.",   // belly with black patch at col 3
-  ".KKKKKKK..",   // body bottom
-];
-const CHAR_FRAMES = [
-  [...CAT_TAILS[0], ...CAT_BODY_ROWS, ".K.K..K.K.", ".K.K..K.K.", ".k.k..k.k."],
-  [...CAT_TAILS[1], ...CAT_BODY_ROWS, "..KK..KK..", "..KK..KK..", "..kk..kk.."],
-  [...CAT_TAILS[2], ...CAT_BODY_ROWS, ".K.K..K.K.", ".K.K..K.K.", ".k.k..k.k."],
-  [...CAT_TAILS[3], ...CAT_BODY_ROWS, "..KK..KK..", "..KK..KK..", "..kk..kk.."],
-];
-
-
-const CON_PAL: Record<string, string> = {
-  C: "#9040e0", c: "#5c18a8",  // controller body / shadow
-  D: "#18083a", d: "#3010a0",  // dark well / dpad arm
-  B: "#c084fc", b: "#e0b0ff",  // face button / highlight
-};
-
-// 12w × 10h — PlayStation-style controller, 2-frame (buttons blink)
-const CON_FRAMES = [
-  [
-    "..CCCCCCCC..",
-    ".CcCCCCCCcC.",
-    "CcDDDDDDDDcC",
-    "CcD.dBd.BdcC",
-    "CcDdddD.ddcC",
-    "CcD.dBd.BdcC",
-    "CcDDDDDDDDcC",
-    ".CcCCCCCCcC.",
-    "...CC....CC.",
-    "...CC....CC.",
-  ],
-  [
-    "..CCCCCCCC..",
-    ".CcCCCCCCcC.",
-    "CcDDDDDDDDcC",
-    "CcD.dbd.bdcC",
-    "CcDdddD.ddcC",
-    "CcD.dbd.bdcC",
-    "CcDDDDDDDDcC",
-    ".CcCCCCCCcC.",
-    "...CC....CC.",
-    "...CC....CC.",
-  ],
-];
-
-function drawPx(
-  ctx: CanvasRenderingContext2D,
-  grid: string[],
-  pal: Record<string, string>,
-  x: number, y: number, sc: number
-) {
-  for (let ry = 0; ry < grid.length; ry++) {
-    for (let rx = 0; rx < grid[ry].length; rx++) {
-      const col = pal[grid[ry][rx]];
-      if (col) {
-        ctx.fillStyle = col;
-        ctx.fillRect(Math.round(x + rx * sc), Math.round(y + ry * sc), sc, sc);
-      }
-    }
-  }
-}
 
 function LoadingScreen({ onDone }: { onDone: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -350,6 +269,8 @@ function buildT(lang: Lang) {
     eduEst: isEs ? "Técnico Secundario · 2017–2023" : "Tech Secondary · 2017–2023",
     checkboxRain: isEs ? "Desactivar lluvia" : "Disable rain",
     checkboxSnow: isEs ? "Desactivar nieve" : "Disable snow",
+    checkbox3d: isEs ? "Desactivar 3D" : "Disable 3D",
+    checkboxCat: isEs ? "Desactivar gato" : "Disable cat",
     footerRole: isEs ? "Desarrollador de Software" : "Software Developer",
     techStackLabel: isEs ? "Stack tecnológico:" : "Tech stack:",
     eduLabel: isEs ? "Educación:" : "Education:",
@@ -510,14 +431,40 @@ type TermLine = { kind: "in" | "out" | "err"; text: string };
 const CMD: Record<string, (args: string[]) => string[]> = {
   help: () => [
     "commands:",
-    "  whoami      — about me",
-    "  ls          — list projects",
-    "  ls projects — list projects",
-    "  contact     — reach me",
-    "  cv          — download my CV",
-    "  clear       — clear screen",
-    "  exit        — close terminal",
+    "  whoami       — about me",
+    "  neofetch     — system info",
+    "  ls           — list projects",
+    "  contact      — reach me",
+    "  cv           — download my CV",
+    "  snake        — play snake",
+    "  matrix       — follow the purple rabbit",
+    "  sudo hire-me — acquire a developer",
+    "  clear        — clear screen",
+    "  exit         — close terminal",
   ],
+  neofetch: () => [
+    "   /\\_/\\      nacho@portfolio",
+    "  ( o.o )     ----------------",
+    "   > ^ <      os:      NACHO-OS v3.0 (pixel edition)",
+    "              host:    vercel edge runtime",
+    "              shell:   next.js 16 + react 19",
+    "              uptime:  3+ years coding",
+    "              lang:    python · typescript",
+    "              stack:   fastapi · next.js · postgres · azure",
+    "              theme:   crt-purple phosphor [#c084fc]",
+    "              status:  employed @ dowl · open to offers",
+  ],
+  sudo: (args) =>
+    args.join(" ") === "hire-me"
+      ? [
+          "[sudo] password for recruiter: ********",
+          "access granted.",
+          "initiating hiring protocol...",
+          "  → cv:    /cv/ignacio-aristegui-cv.pdf",
+          "  → email: ignacioaristegui025@gmail.com",
+          "done. nacho is now on your team. handle with care :)",
+        ]
+      : ["user is not in the sudoers file. this incident will be reported."],
   whoami: () => [
     "Ignacio Aristegui — Full-Stack Developer",
     "Based in Argentina · open to relocation",
@@ -549,6 +496,143 @@ const CMD: Record<string, (args: string[]) => string[]> = {
   ],
 };
 
+function SnakeGame({ onExit }: { onExit: (score: number) => void }) {
+  const GW = 26;
+  const GH = 14;
+  const [, force] = useState(0);
+  const state = useRef({
+    snake: [[8, 7], [7, 7], [6, 7]] as [number, number][],
+    dir: [1, 0] as [number, number],
+    nextDir: [1, 0] as [number, number],
+    food: [17, 7] as [number, number],
+    score: 0,
+  });
+
+  useEffect(() => {
+    const keys = (e: KeyboardEvent) => {
+      const st = state.current;
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onExit(st.score);
+        return;
+      }
+      const dirs: Record<string, [number, number]> = {
+        ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+        w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0],
+      };
+      const nd = dirs[e.key];
+      if (nd) {
+        e.preventDefault();
+        if (nd[0] !== -st.dir[0] || nd[1] !== -st.dir[1]) st.nextDir = nd;
+      }
+    };
+    window.addEventListener("keydown", keys, true);
+
+    const iv = setInterval(() => {
+      const st = state.current;
+      st.dir = st.nextDir;
+      const head: [number, number] = [st.snake[0][0] + st.dir[0], st.snake[0][1] + st.dir[1]];
+      const hitWall = head[0] < 0 || head[0] >= GW || head[1] < 0 || head[1] >= GH;
+      const hitSelf = st.snake.some((c) => c[0] === head[0] && c[1] === head[1]);
+      if (hitWall || hitSelf) {
+        clearInterval(iv);
+        onExit(st.score);
+        return;
+      }
+      st.snake.unshift(head);
+      if (head[0] === st.food[0] && head[1] === st.food[1]) {
+        st.score += 10;
+        do {
+          st.food = [Math.floor(Math.random() * GW), Math.floor(Math.random() * GH)];
+        } while (st.snake.some((c) => c[0] === st.food[0] && c[1] === st.food[1]));
+      } else {
+        st.snake.pop();
+      }
+      force((n) => n + 1);
+    }, 110);
+
+    return () => {
+      window.removeEventListener("keydown", keys, true);
+      clearInterval(iv);
+    };
+  }, [onExit]);
+
+  const st = state.current;
+  const rows: string[] = [];
+  for (let y = 0; y < GH; y++) {
+    let row = "";
+    for (let x = 0; x < GW; x++) {
+      if (st.snake[0][0] === x && st.snake[0][1] === y) row += "▓";
+      else if (st.snake.some((c) => c[0] === x && c[1] === y)) row += "█";
+      else if (st.food[0] === x && st.food[1] === y) row += "♦";
+      else row += " ";
+    }
+    rows.push(row);
+  }
+
+  return (
+    <div style={{ padding: "12px" }}>
+      <div style={{ color: "#c084fc", marginBottom: "8px" }}>
+        SNAKE · score: {st.score} · arrows/wasd · ESC quits
+      </div>
+      <pre style={{ margin: 0, lineHeight: 1.15, color: "#c084fc", fontSize: "14px", fontFamily: '"Perfect DOS VGA 437 Win", monospace', textShadow: "0 0 8px #c084fc66" }}>
+        {"┌" + "─".repeat(GW) + "┐\n" + rows.map((r) => "│" + r + "│").join("\n") + "\n└" + "─".repeat(GW) + "┘"}
+      </pre>
+    </div>
+  );
+}
+
+function MatrixRain({ onExit }: { onExit: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    const FS = 14;
+    const cols = Math.max(1, Math.floor(canvas.width / FS));
+    const drops = Array.from({ length: cols }, () => Math.random() * -40);
+    const glyphs = "アィカサタナハマヤラワ0123456789ABCDEF<>/{};=+-*";
+
+    const iv = setInterval(() => {
+      ctx.fillStyle = "rgba(6,1,14,0.18)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = `${FS}px monospace`;
+      for (let i = 0; i < cols; i++) {
+        const ch = glyphs[Math.floor(Math.random() * glyphs.length)];
+        const y = drops[i] * FS;
+        ctx.fillStyle = Math.random() < 0.12 ? "#f3e8ff" : "#c084fc";
+        ctx.fillText(ch, i * FS, y);
+        drops[i]++;
+        if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      }
+    }, 50);
+
+    const key = (e: KeyboardEvent) => {
+      e.stopPropagation();
+      onExit();
+    };
+    window.addEventListener("keydown", key, true);
+    return () => {
+      clearInterval(iv);
+      window.removeEventListener("keydown", key, true);
+    };
+  }, [onExit]);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <canvas ref={canvasRef} onClick={onExit} style={{ width: "100%", height: "300px", display: "block" }} />
+      <span style={{ position: "absolute", bottom: "6px", right: "10px", color: "#6b21a8", fontSize: "10px" }}>
+        press any key to exit
+      </span>
+    </div>
+  );
+}
+
 function Terminal({ onClose }: { onClose: () => void }) {
   const [lines, setLines] = useState<TermLine[]>([
     { kind: "out", text: 'nacho@portfolio ~ % type "help" for commands' },
@@ -556,13 +640,16 @@ function Terminal({ onClose }: { onClose: () => void }) {
   const [input, setInput] = useState("");
   const [cmdHist, setCmdHist] = useState<string[]>([]);
   const [histIdx, setHistIdx] = useState(-1);
+  const [mode, setMode] = useState<"shell" | "snake" | "matrix">("shell");
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { if (mode === "shell") inputRef.current?.focus(); }, [mode]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [lines]);
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape" && modeRef.current === "shell") onClose(); };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
@@ -584,6 +671,17 @@ function Terminal({ onClose }: { onClose: () => void }) {
       a.href = "/cv/ignacio-aristegui-cv.pdf";
       a.download = "ignacio-aristegui-cv.pdf";
       a.click();
+    }
+    if (cmd === "snake" || cmd === "matrix") {
+      setLines((prev) => [
+        ...prev,
+        { kind: "in", text: trimmed },
+        { kind: "out", text: cmd === "snake" ? "launching snake... (arrows/wasd · ESC quits)" : "entering the matrix... (any key exits)" },
+      ]);
+      setCmdHist(h => [trimmed, ...h]);
+      setInput(""); setHistIdx(-1);
+      setMode(cmd);
+      return;
     }
 
     const next: TermLine[] = [...lines, { kind: "in", text: trimmed }];
@@ -636,39 +734,57 @@ function Terminal({ onClose }: { onClose: () => void }) {
           <span style={{ color: "#c084fc" }}>nacho@portfolio:~</span>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#c084fc", cursor: "pointer", fontFamily: "inherit", fontSize: "11px" }}>[ × ]</button>
         </div>
-        <div style={S.body}>
-          {lines.map((l, i) => (
-            <div key={i} style={{ color: l.kind === "in" ? "#e2c4ff" : l.kind === "err" ? "#ff6b8a" : "#c084fc" }}>
-              {l.kind === "in" && <span style={{ color: "#6b21a8", marginRight: "8px" }}>❯</span>}
-              {l.text}
-            </div>
-          ))}
-          <div ref={bottomRef} />
-        </div>
-        <div style={S.inputRow}>
-          <span style={{ color: "#6b21a8" }}>❯</span>
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === "Enter") { run(input); }
-              if (e.key === "ArrowUp") {
-                e.preventDefault();
-                const idx = Math.min(histIdx + 1, cmdHist.length - 1);
-                setHistIdx(idx); setInput(cmdHist[idx] ?? "");
-              }
-              if (e.key === "ArrowDown") {
-                e.preventDefault();
-                const idx = Math.max(histIdx - 1, -1);
-                setHistIdx(idx); setInput(idx === -1 ? "" : cmdHist[idx]);
-              }
+        {mode === "snake" ? (
+          <SnakeGame
+            onExit={(score) => {
+              setMode("shell");
+              setLines((p) => [...p, { kind: "out", text: `snake: game over — score ${score}` }]);
             }}
-            style={S.inputEl}
-            spellCheck={false}
-            autoComplete="off"
           />
-        </div>
+        ) : mode === "matrix" ? (
+          <MatrixRain
+            onExit={() => {
+              setMode("shell");
+              setLines((p) => [...p, { kind: "out", text: "you took the purple pill. welcome back." }]);
+            }}
+          />
+        ) : (
+          <>
+            <div style={S.body}>
+              {lines.map((l, i) => (
+                <div key={i} style={{ whiteSpace: "pre", color: l.kind === "in" ? "#e2c4ff" : l.kind === "err" ? "#ff6b8a" : "#c084fc" }}>
+                  {l.kind === "in" && <span style={{ color: "#6b21a8", marginRight: "8px" }}>❯</span>}
+                  {l.text}
+                </div>
+              ))}
+              <div ref={bottomRef} />
+            </div>
+            <div style={S.inputRow}>
+              <span style={{ color: "#6b21a8" }}>❯</span>
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") { run(input); }
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    const idx = Math.min(histIdx + 1, cmdHist.length - 1);
+                    setHistIdx(idx); setInput(cmdHist[idx] ?? "");
+                  }
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    const idx = Math.max(histIdx - 1, -1);
+                    setHistIdx(idx); setInput(idx === -1 ? "" : cmdHist[idx]);
+                  }
+                }}
+                style={S.inputEl}
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -681,6 +797,8 @@ export default function Home() {
   const [lang, setLang] = useState<Lang>("en");
   const [rainEnabled, setRainEnabled] = useState(true);
   const [snowEnabled, setSnowEnabled] = useState(true);
+  const [threeEnabled, setThreeEnabled] = useState(true);
+  const [catEnabled, setCatEnabled] = useState(true);
   const [termOpen, setTermOpen] = useState(false);
   const [cvOpen, setCvOpen] = useState(false);
   const t = buildT(lang);
@@ -742,19 +860,25 @@ export default function Home() {
       <div id="snow" style={{ display: snowEnabled ? undefined : "none" }} />
       <FpsCounter />
       {rainEnabled && <RainCanvas />}
+      {catEnabled && <PixelCat />}
       <MobileMenu />
 
       <div id="container">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/images/wires.png" id="wires" width={922} height={126} alt="" />
 
-        {/* Logo + globe toggle */}
-        <Link href="/" id="logo-link">
-          <div id="logo" style={{ fontFamily: '"Pixel NES", sans-serif', fontSize: "45px", color: "#c084fc", letterSpacing: "4px", filter: "drop-shadow(0 0 0.75rem rgba(192,132,252,0.5))", paddingBottom: "4px" }}>
-            NACHO
+        {/* Logo + globe toggle + 3D CRT */}
+        <div id="hero">
+          <div id="hero-left">
+            <Link href="/" id="logo-link">
+              <div id="logo" style={{ fontFamily: '"Pixel NES", sans-serif', fontSize: "45px", color: "#c084fc", letterSpacing: "4px", filter: "drop-shadow(0 0 0.75rem rgba(192,132,252,0.5))", paddingBottom: "4px" }}>
+                NACHO
+              </div>
+            </Link>
+            <div style={{ paddingLeft: "2px", marginBottom: "4px" }}>{globeBtn}</div>
           </div>
-        </Link>
-        <div style={{ paddingLeft: "2px", marginBottom: "4px" }}>{globeBtn}</div>
+          {threeEnabled && <Crt3D onActivate={() => setTermOpen(true)} />}
+        </div>
 
         <div id="main-layout">
 
@@ -1028,6 +1152,12 @@ export default function Home() {
               </label>
               <label style={{ display: "block", cursor: "pointer" }}>
                 <input type="checkbox" checked={!snowEnabled} onChange={(e) => setSnowEnabled(!e.target.checked)} /> {t.checkboxSnow}
+              </label>
+              <label style={{ display: "block", cursor: "pointer" }}>
+                <input type="checkbox" checked={!threeEnabled} onChange={(e) => setThreeEnabled(!e.target.checked)} /> {t.checkbox3d}
+              </label>
+              <label style={{ display: "block", cursor: "pointer" }}>
+                <input type="checkbox" checked={!catEnabled} onChange={(e) => setCatEnabled(!e.target.checked)} /> {t.checkboxCat}
               </label>
               <button
                 onClick={() => setTermOpen(true)}
