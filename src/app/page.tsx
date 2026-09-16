@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
-import { LS, CHAR_PAL, CHAR_FRAMES, CON_PAL, CON_FRAMES, drawPx } from "./pixelArt";
-import PixelCat from "./PixelCat";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { LS, CON_PAL, CON_FRAMES, drawPx } from "./pixelArt";
 
 const CvModal = dynamic(() => import("./CvModal"), { ssr: false });
 const Crt3D = dynamic(() => import("./Crt3D"), { ssr: false });
+const CowCat3D = dynamic(() => import("./CowCat3D"), { ssr: false });
 
 type Lang = "en" | "es";
 
@@ -98,6 +98,19 @@ function MobileMenu() {
 function LoadingScreen({ onDone }: { onDone: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fading, setFading] = useState(false);
+  const [catReady, setCatReady] = useState(false);
+  const onCatReady = useCallback(() => setCatReady(true), []);
+
+  useEffect(() => {
+    // Give the actual 3D model time on screen, even on a cold chunk load.
+    // The fallback still lets the page open if WebGL or the chunk is unavailable.
+    let doneAt: ReturnType<typeof setTimeout>;
+    const fadeAt = setTimeout(() => {
+      setFading(true);
+      doneAt = setTimeout(onDone, 500);
+    }, catReady ? 1500 : 6000);
+    return () => { clearTimeout(fadeAt); clearTimeout(doneAt); };
+  }, [catReady, onDone]);
 
   useEffect(() => {
     const _cv = canvasRef.current;
@@ -111,37 +124,35 @@ function LoadingScreen({ onDone }: { onDone: () => void }) {
     resize();
     window.addEventListener("resize", resize);
 
-    const charH = CHAR_FRAMES[0].length;
-    const charW = CHAR_FRAMES[0][0].length;
-    let charX = window.innerWidth / 2 - (charW * LS) / 2;
-    const groundY = Math.round(window.innerHeight * 0.58);
+    const groundY = () => Math.round(canvas.height * 0.58);
 
     type Spark = { x: number; y: number; vy: number; size: number; alpha: number };
     const sparks: Spark[] = Array.from({ length: 22 }, () => ({
       x: Math.random() * window.innerWidth,
-      y: groundY - Math.random() * window.innerHeight * 0.5,
+      y: groundY() - Math.random() * window.innerHeight * 0.5,
       vy: -0.4 - Math.random() * 1.2,
       size: 1.5 + Math.random() * 2.5,
       alpha: Math.random() * 0.6,
     }));
 
-    let fi = 0, tick = 0, raf: number;
+    let tick = 0, raf: number;
     const FPS = 10;
     let last = 0;
 
     function loop(now: number) {
       if (now - last > 1000 / FPS) {
         const w = canvas.width;
+        const ground = groundY();
         ctx.clearRect(0, 0, w, canvas.height);
 
         // glowing ground line
         ctx.shadowColor = "#c084fc";
         ctx.shadowBlur = 14;
         ctx.fillStyle = "#c084fc";
-        ctx.fillRect(0, groundY, w, 2);
+        ctx.fillRect(0, ground, w, 2);
         ctx.shadowBlur = 0;
         ctx.fillStyle = "rgba(192,132,252,0.10)";
-        ctx.fillRect(0, groundY + 2, w, 8);
+        ctx.fillRect(0, ground + 2, w, 8);
 
         // sparkles rising from ground
         sparks.forEach(sp => {
@@ -149,7 +160,7 @@ function LoadingScreen({ onDone }: { onDone: () => void }) {
           sp.alpha -= 0.012;
           if (sp.alpha <= 0 || sp.y < 0) {
             sp.x = Math.random() * w;
-            sp.y = groundY;
+            sp.y = ground;
             sp.alpha = 0.3 + Math.random() * 0.5;
             sp.vy = -0.4 - Math.random() * 1.2;
           }
@@ -160,27 +171,16 @@ function LoadingScreen({ onDone }: { onDone: () => void }) {
         ctx.globalAlpha = 1;
 
         // console floating ahead with glow
-        const conX = charX + (charW + 5) * LS + Math.sin(tick / 1.8) * LS * 3;
-        const conY = groundY - 22 * LS + Math.sin(tick / 1.3) * LS * 4;
+        const conX = Math.min(w / 2 + 90, w - CON_FRAMES[0][0].length * LS - 12) + Math.sin(tick / 1.8) * 6;
+        const conY = ground - 22 * LS + Math.sin(tick / 1.3) * LS * 4;
         ctx.shadowColor = "#c084fc";
         ctx.shadowBlur = 22;
         drawPx(ctx, CON_FRAMES[tick % 2], CON_PAL, conX, conY, LS);
         ctx.shadowBlur = 0;
 
-        // character shadow on ground
+        // Ground shadow under the shared Three.js cat.
         ctx.fillStyle = "rgba(80,0,140,0.25)";
-        ctx.fillRect(charX + LS * 2, groundY + 2, charW * LS - LS * 4, 5);
-
-        // character glow pass (blurred silhouette drawn first, THEN crisp pixels on top)
-        ctx.shadowColor = "#c084fc";
-        ctx.shadowBlur = 14;
-        ctx.globalAlpha = 0.35;
-        drawPx(ctx, CHAR_FRAMES[fi % 4], CHAR_PAL, charX, groundY - charH * LS, LS);
-        ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
-
-        // character crisp — no glow so face stays visible
-        drawPx(ctx, CHAR_FRAMES[fi % 4], CHAR_PAL, charX, groundY - charH * LS, LS);
+        ctx.fillRect(w / 2 - 55, ground + 2, 110, 5);
 
         // BOOTING text
         const dots = ".".repeat((tick % 3) + 1) + " ".repeat(2 - (tick % 3));
@@ -189,25 +189,21 @@ function LoadingScreen({ onDone }: { onDone: () => void }) {
         ctx.shadowBlur = 16;
         ctx.font = `${LS * 3}px "Pixel NES", monospace`;
         ctx.textAlign = "center";
-        ctx.fillText(`BOOTING${dots}`, w / 2, groundY + LS * 13);
+        ctx.fillText(`BOOTING${dots}`, w / 2, ground + LS * 13);
         ctx.shadowBlur = 0;
 
-        charX += LS * 2;
-        if (charX > w + charW * LS) charX = -charW * LS;
-        fi++; tick++;
+        tick++;
         last = now;
       }
       raf = requestAnimationFrame(loop);
     }
     raf = requestAnimationFrame(loop);
 
-    const fadeAt = setTimeout(() => { setFading(true); setTimeout(onDone, 500); }, 1500);
-
-    return () => { cancelAnimationFrame(raf); clearTimeout(fadeAt); window.removeEventListener("resize", resize); };
-  }, [onDone]);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
+  }, []);
 
   return (
-    <div style={{
+    <div role="status" aria-label="Booting" style={{
       position: "fixed", inset: 0, zIndex: 9999,
       backdropFilter: "blur(7px) brightness(0.45)",
       background: "rgba(8, 2, 20, 0.4)",
@@ -216,6 +212,9 @@ function LoadingScreen({ onDone }: { onDone: () => void }) {
       pointerEvents: fading ? "none" : "all",
     }}>
       <canvas ref={canvasRef} style={{ display: "block" }} />
+      <div className="boot-cat-stage">
+        <CowCat3D mode="boot" onReady={onCatReady} />
+      </div>
     </div>
   );
 }
@@ -794,6 +793,7 @@ function Terminal({ onClose }: { onClose: () => void }) {
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
+  const finishLoading = useCallback(() => setLoading(false), []);
   const [lang, setLang] = useState<Lang>("en");
   const [rainEnabled, setRainEnabled] = useState(true);
   const [snowEnabled, setSnowEnabled] = useState(true);
@@ -851,7 +851,7 @@ export default function Home() {
 
   return (
     <>
-      {loading && <LoadingScreen onDone={() => setLoading(false)} />}
+      {loading && <LoadingScreen onDone={finishLoading} />}
       {termOpen && <Terminal onClose={() => setTermOpen(false)} />}
       {cvOpen && <CvModal onClose={() => setCvOpen(false)} lang={lang} />}
       <a className="skip-to" href="#about">Skip to content</a>
@@ -860,7 +860,7 @@ export default function Home() {
       <div id="snow" style={{ display: snowEnabled ? undefined : "none" }} />
       <FpsCounter />
       {rainEnabled && <RainCanvas />}
-      {catEnabled && <PixelCat />}
+      {!loading && catEnabled && <CowCat3D lang={lang} />}
       <MobileMenu />
 
       <div id="container">
@@ -1122,7 +1122,7 @@ export default function Home() {
               <br /><br />
               <div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="https://dowl.ar/wp-content/uploads/2024/05/cropped-logo-blanco-dowl.webp" width={32} height={32} alt="" style={{ float: "left", marginRight: "10px", imageRendering: "auto", borderRadius: "50%", marginTop: "3px" }} />
+                <img src="https://instagram.faep8-2.fna.fbcdn.net/v/t51.2885-19/449409004_2478856872323960_216651685709042175_n.jpg?_nc_cat=104&ccb=7-5&_nc_sid=bf7eb4&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy40NDQuQzMifQ%3D%3D&_nc_ohc=TCvkdhNC-qIQ7kNvwHjx5rF&_nc_oc=AdrN6Mke5YGteTrnZkQBrYIO6qjOu_u7qygNAJiDptnQJUv2qlKFlRgQwET--77zCuU&_nc_zt=24&_nc_ht=instagram.faep8-2.fna&_nc_ss=7b6a8&oh=00_AQJgscKlOm0cYYwqak1F_oX1Ia-gzunBb59rgV3bOvNK3w&oe=6AB0B179" width={32} height={32} alt="" style={{ float: "left", marginRight: "10px", imageRendering: "auto", borderRadius: "50%", marginTop: "3px" }} />
                 <span>
                   <b style={{ color: "var(--link-color)" }}>Dowl</b>
                   <span style={{ color: "gray", fontSize: "12px" }}> · {t.currentWorkPeriod}</span>

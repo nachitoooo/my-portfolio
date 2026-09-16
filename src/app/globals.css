@@ -259,6 +259,64 @@ footer {
   z-index: -5;
 }
 
+/* ── Three.js companion ── */
+.cow-cat {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 900;
+  width: 180px;
+  height: 160px;
+  max-width: 100vw;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.cow-cat[hidden] { display: none; }
+.cow-cat:active { cursor: grabbing; }
+.cow-cat:focus-visible { outline: 1px dashed #c084fc; outline-offset: -8px; border-radius: 24px; }
+.cow-cat canvas { display: block; width: 100%; height: 100%; }
+.cow-cat-effect {
+  position: absolute;
+  top: 4px;
+  left: 58%;
+  color: #d7b1ff;
+  font: 16px "Courier New", monospace;
+  pointer-events: none;
+  text-shadow: 0 0 8px #b377d9;
+}
+.cow-cat-effect.is-loved { color: #ff9bcf; font-size: 25px; animation: cat-love 2s ease-out both; }
+@keyframes cat-love {
+  from { opacity: 1; transform: translateY(10px) scale(0.8); }
+  to { opacity: 0; transform: translateY(-22px) scale(1.2); }
+}
+@media (max-width: 600px) {
+  .cow-cat { width: 145px; height: 130px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cow-cat-effect.is-loved { animation: none; }
+}
+/* Keep the boot model's paws on the loading screen's 58% ground line. */
+.boot-cat-stage {
+  position: absolute;
+  top: 58%;
+  left: 50%;
+  width: clamp(180px, 35vw, 240px);
+  aspect-ratio: 9 / 8;
+  transform: translate(-50%, -91%);
+  pointer-events: none;
+}
+.cow-cat.cow-cat--boot {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  cursor: default;
+}
+
 /* ── Mewo cat ── */
 #mewo {
   position: absolute;
