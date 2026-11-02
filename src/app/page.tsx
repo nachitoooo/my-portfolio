@@ -982,6 +982,14 @@ export default function Home() {
                   </a>
                   <br />
                   <span style={{ color: "#c084fc", fontSize: "13px" }}>{p.stack}</span>
+                  {p.href && (
+                    <>
+                      <br />
+                      <a target="_blank" rel="noopener" href={p.href} style={{ fontSize: "13px" }}>
+                        ↗ {p.href.replace(/^https?:\/\//, "")}
+                      </a>
+                    </>
+                  )}
                   <ul style={{ marginBlockStart: "4px" }}>
                     {p.bullets.map((b, i) => <li key={i}>{b}</li>)}
                   </ul>
