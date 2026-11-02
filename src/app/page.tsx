@@ -368,6 +368,16 @@ function buildT(lang: Lang) {
     projects: isEs
       ? [
           {
+            name: "HonyCars – CRM con IA para Concesionarias",
+            href: "https://honycars.com",
+            stack: "FastAPI · Next.js · PostgreSQL · Redis · Docker · Groq AI",
+            bullets: [
+              "SaaS multi-tenant en producción que diseñé y desarrollé de punta a punta, para que las concesionarias no pierdan consultas: aislamiento entre empresas con Row Level Security de PostgreSQL.",
+              "Centraliza los leads de WhatsApp (Cloud API de Meta), Mercado Libre, Instagram, la web y planillas; un asistente con IA contesta por WhatsApp al instante.",
+              "Reparto en tiempo real entre vendedores según el horario de cada sucursal, seguimiento con SLA, push en la PWA, presupuestos, stock, ventas y reportes por rol. Workers en segundo plano con ARQ + Redis.",
+            ],
+          },
+          {
             name: "SaaS ERP para PYMEs – ARCA Integrado",
             stack: "Django REST · PostgreSQL · ARCA",
             bullets: [
@@ -385,6 +395,16 @@ function buildT(lang: Lang) {
           },
         ]
       : [
+          {
+            name: "HonyCars – AI-Powered CRM for Car Dealerships",
+            href: "https://honycars.com",
+            stack: "FastAPI · Next.js · PostgreSQL · Redis · Docker · Groq AI",
+            bullets: [
+              "Multi-tenant SaaS in production that I designed and built end to end, so dealerships stop losing leads; tenant isolation enforced with PostgreSQL Row Level Security.",
+              "Unifies leads from WhatsApp (Meta Cloud API), Mercado Libre, Instagram, web forms and spreadsheets; an AI assistant replies on WhatsApp instantly.",
+              "Real-time lead assignment across salespeople based on each branch's business hours, SLA tracking, PWA push notifications, quotes, inventory, sales and role-based reports. Background jobs with ARQ + Redis.",
+            ],
+          },
           {
             name: "SaaS ERP for SMEs – ARCA Integrated",
             stack: "Django REST · PostgreSQL · ARCA",
@@ -476,6 +496,7 @@ const CMD: Record<string, (args: string[]) => string[]> = {
       return [`ls: ${args[0]}: No such file or directory`];
     return [
       "projects/",
+      "├── honycars/     [FastAPI · Next.js · Postgres]    honycars.com",
       "├── dowl/         [FastAPI · Next.js · Azure]      [private]",
       "├── sustant/      [Next.js · Supabase]              sustant.vercel.app",
       "├── atlantic/     [React · Django REST]             atlanticsoftware.vercel.app",
